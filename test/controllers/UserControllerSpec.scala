@@ -12,13 +12,22 @@ import play.api.libs.json.JsUndefined
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json.JsDefined
 import util.Hash
+import authorizer.Authorizer
+import authorizer.AuthorizerImpl
+import authorizer.AuthorizationToken
 
 class UserControllerSpec extends PlaySpecification with Results {
-  def fakeSignupRequest(body: JsValue = null)(implicit app: Application) =
+  def fakeSignupRequest(body: JsValue)(implicit app: Application) =
     route(app, FakeRequest(PUT, "/user").withJsonBody(body))
 
-  def fakeLoginRequest(body: JsValue = null)(implicit app: Application) =
+  def fakeLoginRequest(body: JsValue)(implicit app: Application) =
     route(app, FakeRequest(POST, "/user").withJsonBody(body))
+
+  def fakeUserStatsRequest(jwtToken: String)(implicit app: Application) =
+    route(
+      app,
+      FakeRequest(GET, "/user/stats").withHeaders("Authorization" -> jwtToken)
+    )
 
   "create" should {
     "return 400 status code if any required field is missing" in new WithApplication {
@@ -102,5 +111,31 @@ class UserControllerSpec extends PlaySpecification with Results {
   "logout" should {
     "return 400 status code if the jwt token is missing or it can't be decrypted" in todo
     "no longer allow to use the de-authorized jwt token" in todo
+  }
+
+  "stats" should {
+    "require a valid authorization token" in new WithApplication {
+      def expect401Code(jwtToken: String) = {
+        val Some(result) =
+          fakeUserStatsRequest(jwtToken)
+        status(result) must equalTo(401)
+      }
+
+      expect401Code("")
+      expect401Code("1234")
+      expect401Code(AuthorizationToken("john@email.com").toString() + "x")
+    }
+    "return an empty object if user is logged in" in new WithApplication {
+      def expect200Code(jwtToken: String) = {
+        val Some(result) =
+          fakeUserStatsRequest(jwtToken)
+        status(result) must equalTo(200)
+      }
+
+      val token = AuthorizationToken("john@email.com")
+      val Some(result) = fakeUserStatsRequest(token.toString())
+      status(result) must equalTo(200)
+      contentAsJson(result) must equalTo(Json.obj())
+    }
   }
 }

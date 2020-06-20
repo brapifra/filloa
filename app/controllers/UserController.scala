@@ -13,12 +13,14 @@ import authorizer.Authorizer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import user.UserFacade
+import util.AuthorizedAction
 
 @Singleton
 class UserController @Inject() (
     val controllerComponents: ControllerComponents,
     val userFacade: UserFacade,
-    val authorizer: Authorizer
+    val authorizer: Authorizer,
+    val authorizedAction: AuthorizedAction,
 ) extends BaseController {
 
   def create() = Action.async(parse.json[CreateOrLoginUserDTO]) {
@@ -44,6 +46,9 @@ class UserController @Inject() (
       }
   }
 
+  def stats() = authorizedAction { implicit request =>
+    Ok(Json.obj())
+  }
 }
 
 case class CreateOrLoginUserDTO(email: String, password: String) {}

@@ -16,12 +16,13 @@ import pdi.jwt.JwtJson
 import pdi.jwt.JwtAlgorithm
 import user.User
 import util.Hash
+import scala.util.Try
 
 @ImplementedBy(classOf[AuthorizerImpl])
 trait Authorizer {
   def authorize(
       userInfo: CreateOrLoginUserDTO
-  ): Future[Option[JwtToken]];
+  ): Future[Option[AuthorizationToken]];
   def deauthorize(email: String): Future[Unit];
 }
 
@@ -43,11 +44,11 @@ case class AuthorizerImpl @Inject() (val userRepository: UserRepository)
   private def maybeGenerateJwtToken(
       user: User,
       rawLoginPassword: String
-  ): Option[JwtToken] = {
+  ): Option[AuthorizationToken] = {
     val isPasswordCorrect = user.password == Hash(rawLoginPassword)
 
     if (isPasswordCorrect) {
-      Some(JwtToken(Json.obj("email" -> user.email)))
+      Some(AuthorizationToken(user.email))
     } else {
       None
     }
@@ -56,18 +57,31 @@ case class AuthorizerImpl @Inject() (val userRepository: UserRepository)
   def deauthorize(email: String) = Future {}
 }
 
-case class JwtToken(claimData: JsObject) {
+case class AuthorizationToken(email: String) {
   private implicit val clock: Clock = Clock.systemUTC
+
+  def toJson(): JsValue = Json.obj("type" -> "Bearer", "token" -> toString())
+
+  override def toString(): String = JwtJson.encode(
+    Json.obj("email" -> email),
+    AuthorizationToken.secretKey,
+    AuthorizationToken.algorithm
+  )
+}
+
+object AuthorizationToken {
   private val algorithm = JwtAlgorithm.HS256
   private val secretKey = "changeme"
 
-  private val token: String = JwtJson.encode(
-    claimData,
-    secretKey,
-    algorithm
-  )
+  def apply(obj: JsObject): Try[AuthorizationToken] = {
+    val email = (obj \ "email")
+      .getOrElse(throw new Exception("Cannot parse JWT token"))
+      .toString()
+    Success(AuthorizationToken(email))
+  }
 
-  override def toString() = token
-
-  def toJson() = Json.obj("type" -> "Bearer", "token" -> token)
+  def decode(token: String): Try[AuthorizationToken] =
+    JwtJson
+      .decodeJson(token, secretKey, Seq(algorithm))
+      .flatMap(AuthorizationToken(_))
 }
