@@ -23,9 +23,10 @@ class UserController @Inject() (
 
   def create() = Action.async(parse.json[CreateOrLoginUserDTO]) {
     implicit request: Request[CreateOrLoginUserDTO] =>
-      {
-        userFacade.createUser(request.body).map(_ => Ok(Json.obj()))
-      }
+      userFacade
+        .createUser(request.body)
+        .map(newUser => Ok(Json.toJson(newUser)))
+
   }
 
   def login() = Action.async(parse.json[CreateOrLoginUserDTO]) {
@@ -45,7 +46,6 @@ class UserController @Inject() (
 
 }
 
-// TODO: Hash passwords
 case class CreateOrLoginUserDTO(email: String, password: String) {}
 object CreateOrLoginUserDTO {
   implicit val format: Format[CreateOrLoginUserDTO] =

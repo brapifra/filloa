@@ -11,6 +11,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.JsUndefined
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json.JsDefined
+import util.Hash
 
 class UserControllerSpec extends PlaySpecification with Results {
   def fakeSignupRequest(body: JsValue = null)(implicit app: Application) =
@@ -35,10 +36,16 @@ class UserControllerSpec extends PlaySpecification with Results {
     }
 
     "return a jwt token after a succesful signup" in new WithApplication {
-      val body = Json.obj("email" -> "john", "password" -> "doe")
-      val Some(result) = fakeSignupRequest(body)
+      val requestBody = Json.obj("email" -> "john", "password" -> "doe")
+      val Some(result) = fakeSignupRequest(requestBody)
       status(result) must equalTo(200)
-      contentAsJson(result) must equalTo(Json.obj())
+      contentAsJson(result) must equalTo(
+        Json
+          .obj(
+            "email" -> "john",
+            "password" -> Hash("doe")
+          )
+      )
     }
   }
 

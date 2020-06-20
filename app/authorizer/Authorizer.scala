@@ -15,6 +15,7 @@ import java.time.Clock
 import pdi.jwt.JwtJson
 import pdi.jwt.JwtAlgorithm
 import user.User
+import util.Hash
 
 @ImplementedBy(classOf[AuthorizerImpl])
 trait Authorizer {
@@ -41,9 +42,9 @@ case class AuthorizerImpl @Inject() (val userRepository: UserRepository)
 
   private def maybeGenerateJwtToken(
       user: User,
-      loginPassword: String
+      rawLoginPassword: String
   ): Option[JwtToken] = {
-    val isPasswordCorrect = user.password == loginPassword
+    val isPasswordCorrect = user.password == Hash(rawLoginPassword)
 
     if (isPasswordCorrect) {
       Some(JwtToken(Json.obj("email" -> user.email)))

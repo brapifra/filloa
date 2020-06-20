@@ -11,6 +11,7 @@ scalaVersion := "2.12.11"
 libraryDependencies += guice
 libraryDependencies += specs2 % Test
 libraryDependencies += "com.pauldijou" %% "jwt-play-json" % "4.3.0"
+libraryDependencies += "com.github.t3hnar" %% "scala-bcrypt" % "4.1"
 
 // libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % Test
 
