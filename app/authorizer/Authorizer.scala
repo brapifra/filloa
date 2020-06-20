@@ -53,7 +53,6 @@ case class AuthorizerImpl @Inject() (val userRepository: UserRepository)
     }
   }
 
-  // TODO
   def deauthorize(email: String) = Future {}
 }
 

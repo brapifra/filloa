@@ -98,4 +98,9 @@ class UserControllerSpec extends PlaySpecification with Results {
       (response \ "token").as[String] must not be empty
     }
   }
+
+  "logout" should {
+    "return 400 status code if the jwt token is missing or it can't be decrypted" in todo
+    "no longer allow to use the de-authorized jwt token" in todo
+  }
 }
