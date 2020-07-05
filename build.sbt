@@ -7,6 +7,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 // scalaVersion := "2.13.2"
 scalaVersion := "2.12.11"
+scalacOptions += "-Ywarn-unused"
 
 libraryDependencies += guice
 libraryDependencies += specs2 % Test

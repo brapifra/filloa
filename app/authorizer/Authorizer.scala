@@ -10,8 +10,6 @@ import com.google.inject.ImplementedBy
 import user.UserRepository
 import scala.util.Success
 import play.api.libs.json.JsObject
-import play.api.Configuration
-import java.time.Clock
 import pdi.jwt.JwtJson
 import pdi.jwt.JwtAlgorithm
 import user.User
@@ -58,8 +56,6 @@ case class AuthorizerImpl @Inject() (val userRepository: UserRepository)
 }
 
 case class AuthorizationToken(email: String) {
-  private implicit val clock: Clock = Clock.systemUTC
-
   def toJson(): JsValue = Json.obj("type" -> "Bearer", "token" -> toString())
 
   override def toString(): String = JwtJson.encode(
